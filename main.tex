@@ -87,7 +87,7 @@ classification tasks is considered.
 
 
 \section{Introduction}
-Signal processing for audio tasks such as classification [], segmentation [], filtering [],transcripting [] widely uses deep learning approaches. 
+Signal processing for audio tasks such as classification [\citep{zeng2019spectrogram, xu2018large}], segmentation [\citep{subakan2022using, zeghidour2021wavesplit}], filtering [\citep{defossez2020real, pandey2019tcnn}],transcripting [\citep{leng2021fastcorrect}] widely uses deep learning approaches. 
 Current popularity of deep learning technique takes from 2012 for image classification task \citep{NIPS2012_c399862d}. 
 Unlike images, audio is time series data with variable length. 
 In this work we concentrated on sound event recognition (SER) task. Goal is to identify sounds occurring in everyday life. SER becoming key part in 
@@ -132,6 +132,7 @@ PyTorch\citep{NEURIPS2019_9015}. For input it uses spectrogram features of 1 sec
 16000 sample rate. Each second selected randomly for each sample. 
 It contains of 6 convolutional blocks and two linear layers. Each block consists of two 
 convolutional layers, two batch normalizations and ReLU activations.
+For real-valued network we used Adam optimizer with learning rate 0.003.
 
 \begin{figure}
 	\centering
@@ -143,40 +144,39 @@ convolutional layers, two batch normalizations and ReLU activations.
 For complex counterpart we designed similar architecture. It also contains of 6 convolutional blocks 
 and two linear layers. Each block does not have batch normalizations. In our work we found that usage of 
 complex batch normalizations \citep{Trabelsi2017} do not help to converge at all. We will continue investigate
- this effect in our future. As activation function we used Complex ReLU\citep{Trabelsi2017}. As input we use complex spectrogram
+ this effect in our future. As activation function we used Complex ReLU\citep{Trabelsi2017}. As input we use complex spectrogram.
+ For complex-valued network we used Nesterov optimizer with learning rate 0.03 with reducing ech 50 epochs by factor of 10.
+In our training we used graphic card Tesla V100. In figure \ref{fig:architectures} both architectures are shown. 
 
 \section{Results}
+Results are counterintuitive. Real-valued network has much smaller memory footprint during training comparing to complex-valued one.
+Also uses much more float point operations (9,4 GFLOPs vs 37 GFLOPs). These two factors slows down training process.
+
+We have to disble batch normalization for complex-valued version because of inability of network to converge. In addition, to 
+be able to use softmax we convert complex values befor fully connected layers to magnitude. thus, we creating 
+real-valued input for classification head and able to use standard softmax operation for classification.
+
+In result we achieved on FSD50k dataset mAP 16.3\% for real-valued version and 12.4\% for complex-valued version. 
+In Figure \ref{fig:apperclass} precision per each class is shown. In this work we noticed 
+that real-valued network converges at much higher rate, and generalizes worse. We mean that cross entropy loss was much lower than in complex-valued version.
+This means that complex-valued version has room for improvement to show better results.
 
 \begin{figure}
 	\centering
-	\includegraphics[width=0.49\linewidth]{assets/AP.jpg}
+	\includegraphics[width=0.8\linewidth]{assets/AP.jpg}
 	\caption{Precision scores per each class. Blue bars for complex-valued network, red bars for real-valued network}
 	\label{fig:apperclass}
 \end{figure}
 
+We believe that, complex-valued networks is interesting direction for research. It adds new feature as phase, enlarge feature maps and 
+can be possibility for new regularization in phase domain. It requires more thorough investigation.
 
 \section{Conclution}
-
-% \begin{table}
-% 	\caption{Sample table title}
-% 	\centering
-% 	\begin{tabular}{lll}
-% 		\toprule
-% 		\multicolumn{2}{c}{Part}                   \\
-% 		\cmidrule(r){1-2}
-% 		Name     & Description     & Size ($\mu$m) \\
-% 		\midrule
-% 		Dendrite & Input terminal  & $\sim$100     \\
-% 		Axon     & Output terminal & $\sim$10      \\
-% 		Soma     & Cell body       & up to $10^6$  \\
-% 		\bottomrule
-% 	\end{tabular}
-% 	\label{tab:table}
-% \end{table}
-
+In this work two types of networks were compared on sound event detection task. We have shown that real-valued networks show better results and faster convergence. Though, 
+complex-valued networks have room to improve their generalization ability.
 
 \bibliographystyle{unsrtnat}
-\bibliography{bibliography}  %%% Uncomment this line and comment out the ``thebibliography'' section below to use the external .bib file (using bibtex) .
+\bibliography{bibliography}  
 
 
 \end{document}
